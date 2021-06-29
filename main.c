@@ -18,9 +18,14 @@
 
 #define BGBLACK           CSI "40m"
 #define BGRED             CSI "41m"
+#define BGORANGE          CSI "48;5;202m"
+#define BGPINK            CSI "48;5;165m"
+#define BGGREY            CSI "48;5;240m"
+#define BGBLUE           CSI "48;5;033m"
 #define BGGREEN           CSI "42m"
+#define BGLBLUE            CSI "44m"
+
 #define BGYELLOW          CSI "43m"
-#define BGBLUE            CSI "44m"
 #define BGMAGENTA         CSI "45m"
 #define BGCYAN            CSI "46m"
 #define BGWHITE           CSI "47m"
@@ -29,7 +34,11 @@
 #define RESET "\x1B[0m"
 #define FGRED  "\x1B[31m"
 #define FGGREEN  "\x1B[32m"
-#define FGBLUE  "\x1B[34m"
+#define FGLBLUE  "\x1B[34m"
+#define FGORANGE  "\x1B[38;5;202m"
+#define FGPINK            CSI "38;5;165m"
+#define FGGREY            CSI "38;5;240m"
+#define FGBLUE           CSI "38;5;033m"
 
 #define KYEL  "\x1B[33m"
 #define KMAG  "\x1B[35m"
@@ -40,11 +49,14 @@ typedef enum {
     RED,
     BLUE,
     GREEN,
+    ORANGE,
+    PINK,
+    GREY,
+    LBLUE,
     EMPTY,
 } Color;
 
 typedef struct Tube {
-    unsigned int id;
     Color pos1;
     Color pos2;
     Color pos3;
@@ -97,6 +109,10 @@ void tubeArrayAdd(TubeArray *self, Tube *tube) {
     if (self == NULL) {
         return;
     }
+    if (tube == NULL) {
+        printf("\n\n\n\nNo Tube\n\n\n\n");
+        return;
+    }
     if (self->start != NULL) {
         TubeNode *newNode = (TubeNode *) malloc(sizeof(TubeNode));
         newNode->tube = tube;
@@ -122,7 +138,7 @@ bool tubeArrayRemoveTube(TubeArray *self, Tube *tube) {
     TubeNode* travess = self->start;
     while(travess != NULL) {
         if(travess->tube != NULL && tubecompare(travess->tube, tube)) {
-            if (travess->last) {
+            if (travess->last != NULL) {
                 travess->last->next = travess->next;
             }
             if (travess->next != NULL) {
@@ -135,7 +151,7 @@ bool tubeArrayRemoveTube(TubeArray *self, Tube *tube) {
                 self->end = travess->last;
             }
             self->size--;
-            free(travess);
+            //free(travess);
             return true;
         }
         travess = travess->next;
@@ -147,6 +163,7 @@ void tubeListAdd(TubeListNode *self, TubePath *tubepath) {
     if (self->next == NULL) {
         TubeListNode *newNode = (TubeListNode *) malloc(sizeof(TubeListNode));
         newNode->tubePath = tubepath;
+        newNode->next = NULL;
         self->next = newNode;
         return;
     }
@@ -157,12 +174,12 @@ void tubeListAdd(TubeListNode *self, TubePath *tubepath) {
     }
     TubeListNode *newNode = (TubeListNode *) malloc(sizeof(TubeListNode));
     newNode->tubePath = tubepath;
+    newNode->next=NULL;
     next->next = newNode;
 }
 
-Tube* createTube(int id) {
+Tube* createTube() {
     Tube *tube = (Tube *) malloc(sizeof(Tube));
-    tube->id = id;
     tube->pos1 = EMPTY;
     tube->pos2 = EMPTY;
     tube->pos3 = EMPTY;
@@ -200,11 +217,23 @@ char * getColorFromColor(Color c) {
     if (c == RED) {
         return BGRED;
     }
+    if (c == GREY) {
+        return BGGREY;
+    }
+    if (c == LBLUE) {
+        return BGLBLUE;
+    }
+    if (c == PINK) {
+        return BGPINK;
+    }
     if (c == BLUE) {
         return BGBLUE;
     }
     if (c == GREEN) {
         return BGGREEN;
+    }
+    if (c == ORANGE) {
+        return BGORANGE;
     }
     return BGDEFAULT;
 } 
@@ -338,7 +367,13 @@ moveReturnResult moveTube(TubeArray *a, int start, int end) {
         return ERROR;
     }
     Color topFrom = getTop(from);
-    if (topFrom == EMPTY || to->pos4 != EMPTY || start == end) {
+    Color topTo = getTop(to);
+    if (topFrom == EMPTY || 
+        to->pos4 != EMPTY || 
+        start == end || 
+        ( topTo != EMPTY && topFrom != topTo) ||
+        tubeValidate(from)
+    ) {
         return NOTHINGTODO;
     }
     if (to->pos4 == EMPTY && 
@@ -374,6 +409,8 @@ moveReturnResult moveTube(TubeArray *a, int start, int end) {
 TubeArray * cloneTubeArray(TubeArray * original) {
     TubeArray * newAr = (TubeArray *) malloc(sizeof(TubeArray));
     newAr->size = 0;
+    newAr->start = NULL;
+    newAr->end = NULL;
     TubeNode* toCopy = original->start;
     while(toCopy != NULL) {
         Tube* tube = cloneTube(toCopy->tube);
@@ -401,17 +438,13 @@ bool compareTubeArray(TubeArray * a, TubeArray * b) {
     return r;
 }
 
-bool listHasTubeArray(TubeListNode * node, TubeArray * t) {
-    TubeListNode * p = node;
-    while(p != NULL) {
-        printf("%p", t);
-        printf("%p", p);
-        printf("%p", p->tubePath);
-        printf("%p", p->tubePath->current);
-        if(compareTubeArray(p->tubePath->current, t)) {
+bool listHasTubeArray(TubeListNode * nodeIn, TubeArray * t) {
+    TubeListNode * node = nodeIn;
+    while(node != NULL) {
+        if(compareTubeArray(node->tubePath->current, t)) {
             return true;
         }
-        p = p->next;
+        node = node->next;
     }
     return false;
 }
@@ -420,6 +453,10 @@ bool isArrayBalanced(TubeArray * self) {
     int red = 0;
     int blue = 0;
     int green = 0;
+    int orange = 0;
+    int pink = 0;
+    int grey = 0;
+    int lblue = 0;
 
     TubeNode * node = self->start;
 
@@ -430,32 +467,73 @@ bool isArrayBalanced(TubeArray * self) {
             blue++;
         } else if (node->tube->pos1 == GREEN) {
             green++;
+        } else if (node->tube->pos1 == PINK) {
+            pink++;
+        } else if (node->tube->pos1 == GREY) {
+            grey++;
+        } else if (node->tube->pos1 == LBLUE) {
+            lblue++;
+        } else if (node->tube->pos1 == ORANGE) {
+            orange++;
         }
+
         if (node->tube->pos2 == RED) {
             red++;
         } else if (node->tube->pos2 == BLUE) {
             blue++;
         } else if (node->tube->pos2 == GREEN) {
             green++;
+        } else if (node->tube->pos2 == PINK) {
+            pink++;
+        } else if (node->tube->pos2 == GREY) {
+            grey++;
+        } else if (node->tube->pos2 == LBLUE) {
+            lblue++;
+        } else if (node->tube->pos2 == ORANGE) {
+            orange++;
         }
+
         if (node->tube->pos3 == RED) {
             red++;
         } else if (node->tube->pos3 == BLUE) {
             blue++;
         } else if (node->tube->pos3 == GREEN) {
             green++;
+        } else if (node->tube->pos3 == PINK) {
+            pink++;
+        } else if (node->tube->pos3 == GREY) {
+            grey++;
+        } else if (node->tube->pos3 == LBLUE) {
+            lblue++;
+        } else if (node->tube->pos3 == ORANGE) {
+            orange++;
         }
+
         if (node->tube->pos4 == RED) {
             red++;
         } else if (node->tube->pos4 == BLUE) {
             blue++;
         } else if (node->tube->pos4 == GREEN) {
             green++;
+        } else if (node->tube->pos4 == PINK) {
+            pink++;
+        } else if (node->tube->pos4 == GREY) {
+            grey++;
+        } else if (node->tube->pos4 == LBLUE) {
+            lblue++;
+        } else if (node->tube->pos4 == ORANGE) {
+            orange++;
         }
+
         node = node->next;
     }
 
-    return (red % 4) == 0 && (blue % 4) == 0 && (green % 4) == 0;
+    return (red % 4) == 0 && 
+           (blue % 4) == 0 && 
+           (green % 4) == 0 && 
+           (grey % 4) == 0 && 
+           (lblue % 4) == 0 && 
+           (orange % 4) == 0;
 }
 
 bool isArrayCompleted(TubeArray * self) {
@@ -481,7 +559,7 @@ int main()
     TubeArray * a = (TubeArray *) malloc(sizeof(TubeArray));
     a->size = 0;
 
-    Tube* t = createTube(loadingTube);
+    Tube* t = createTube();
 
     //Load initial state
     while (1) {
@@ -497,15 +575,27 @@ int main()
         } else if (strcmp(str, "b") == 0 || strcmp(str, "blue") == 0 ) {
             printf("Color" FGBLUE " blue"RESET"\n");
             tubeAddColor(t, BLUE);
+        } else if (strcmp(str, "p") == 0 || strcmp(str, "pink") == 0 ) {
+            printf("Color" FGPINK " pink"RESET"\n");
+            tubeAddColor(t, PINK);
         } else if (strcmp(str, "g") == 0 || strcmp(str, "green") == 0 ) {
             printf("Color" FGGREEN " green"RESET"\n");
             tubeAddColor(t, GREEN);
+        } else if (strcmp(str, "gr") == 0 || strcmp(str, "grey") == 0 ) {
+            printf("Color" FGGREY " grey"RESET"\n");
+            tubeAddColor(t, GREY);
+        } else if (strcmp(str, "lb") == 0 || strcmp(str, "ligth blue") == 0 ) {
+            printf("Color" FGGREEN " ligth blue"RESET"\n");
+            tubeAddColor(t, LBLUE);
+        } else if (strcmp(str, "o") == 0 || strcmp(str, "orange") == 0 ) {
+            printf("Color" FGORANGE " orange"RESET"\n");
+            tubeAddColor(t, ORANGE);
         } else if (strcmp(str, "empty") == 0 ) {
             if(tubeIsEmpty(t)) {
                 tubeArrayAdd(a, t);
                 printf("Tube added to list\n");
                 loadingTube += 1;
-                t = createTube(loadingTube);
+                t = createTube();
             }
         } else if (strcmp(str, "e") == 0) {
             printf("Finished Inserting Tubes\n");
@@ -517,7 +607,7 @@ int main()
                     a->size = 0;
                     loadingTube = 0;
                     free(t);
-                    t = createTube(loadingTube);
+                    t = createTube();
                 } else {
                     printf("Tubes are valid\n");
                     tubeArrayAdd(a, t);
@@ -535,16 +625,15 @@ int main()
             if(tubeValidate(t)) {
                 printf("Tube can not be filled with the same color at the start\n");
                 free(t);
-                t = createTube(loadingTube);
+                t = createTube();
             } else {
                 tubeArrayAdd(a, t);
                 printf("Tube added to list\n");
                 loadingTube += 1;
-                t = createTube(loadingTube);
+                t = createTube();
             }
         }
     }
-
     printf("Start processing\n");
     
     TubePath init = {
@@ -560,6 +649,8 @@ int main()
     list->next = NULL;
 
     int size = 1;
+    int success = 0;
+    int alreadyin = 0;
 
     TubePath * final = NULL;
     
@@ -573,17 +664,21 @@ int main()
                 TubeArray* c = cloneTubeArray(a);
                 moveReturnResult r = moveTube(c, i, j);
                 if (r == SUCCESS) {
-          //          printf("success\n", all, c);
                     if (!listHasTubeArray(all, c)) {
+                        if (alreadyin != 0) {
+                            printf("Already in x%i size: %i\n", alreadyin, size);
+                            alreadyin = 0;
+                        }
+                        success++;
                         TubePath *path = (TubePath *) malloc(sizeof(TubePath));
                         path->depth = p->depth + 1;
                         path->current = c;
                         path->parent = p;
                         tubeListAdd(all, path);
                         tubeListAdd(list, path);
-                        printTubeArray(a, NULL);
-                        printf(ESC_CURSOR_MOVE_DOWN(4)"\\/\n");
-                        printTubeArray(c, NULL);
+      //                  printTubeArray(a, NULL);
+       //                 printf(ESC_CURSOR_MOVE_DOWN(4)"\\/\n");
+        //                printTubeArray(c, NULL);
                         if(isArrayCompleted(c)) {
                             printf("Found Complete");
                             final = path;
@@ -592,7 +687,11 @@ int main()
                         size++;
                     } else {
                         clearArray(c);
-                        printf("Already in\n");
+                        if (success != 0) {
+                            printf("success x%i, size: %i\n", success, size);
+                            success = 0;
+                        }
+                        alreadyin++;
                     }
                 } else {
                     clearArray(c);
@@ -610,14 +709,29 @@ int main()
         printf("No solution found");
     } else {
         printf("\n\n===========================\n\n");
+        TubePath * b = NULL;
         while (final != NULL) {
-            printf(ESC_CURSOR_MOVE_DOWN(4)"/\\\n");
-            printTubeArray(final->current, NULL);
-            final = final->parent;
+            //printf(ESC_CURSOR_MOVE_DOWN(4)"/\\\n");
+            //printTubeArray(final->current, NULL);
+            TubePath * nf = final->parent;
+            if(b == NULL) {
+                b = final;
+                b -> parent =  NULL;
+            } else {
+                final->parent = b;
+                b = final;
+            }
+            final = nf;
+
         }
-    }
-
-
     
+        while (b != NULL) {
+            printf(ESC_CURSOR_MOVE_DOWN(4)"\\/\n");
+            printTubeArray(b->current, NULL);
+            b = b -> parent;
+            getchar();
+        }
+
+    }
     return 0;
 }
