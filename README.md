@@ -1,2 +1,6 @@
 # Tube solver
-A simple c utility to solve the sorting tube style games
+A simple c utility to solve sorting tube style games
+
+```bash
+make run
+```
