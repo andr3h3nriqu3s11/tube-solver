@@ -21,26 +21,26 @@
 #define BGORANGE          CSI "48;5;202m"
 #define BGPINK            CSI "48;5;165m"
 #define BGGREY            CSI "48;5;240m"
-#define BGBLUE           CSI "48;5;033m"
+#define BGBLUE            CSI "48;5;033m"
 #define BGGREEN           CSI "42m"
-#define BGLBLUE            CSI "44m"
-
+#define BGLBLUE           CSI "44m"
 #define BGYELLOW          CSI "43m"
+
 #define BGMAGENTA         CSI "45m"
 #define BGCYAN            CSI "46m"
 #define BGWHITE           CSI "47m"
 #define BGDEFAULT         CSI "49m"
 
-#define RESET "\x1B[0m"
-#define FGRED  "\x1B[31m"
-#define FGGREEN  "\x1B[32m"
-#define FGLBLUE  "\x1B[34m"
+#define RESET     "\x1B[0m"
+#define FGRED     "\x1B[31m"
+#define FGGREEN   "\x1B[32m"
+#define FGLBLUE   "\x1B[34m"
 #define FGORANGE  "\x1B[38;5;202m"
 #define FGPINK            CSI "38;5;165m"
 #define FGGREY            CSI "38;5;240m"
 #define FGBLUE           CSI "38;5;033m"
+#define FGYELLOW  "\x1B[33m"
 
-#define KYEL  "\x1B[33m"
 #define KMAG  "\x1B[35m"
 #define KCYN  "\x1B[36m"
 #define KWHT  "\x1B[37m"
@@ -53,6 +53,7 @@ typedef enum {
     PINK,
     GREY,
     LBLUE,
+    YELLOW,
     EMPTY,
 } Color;
 
@@ -234,6 +235,9 @@ char * getColorFromColor(Color c) {
     }
     if (c == ORANGE) {
         return BGORANGE;
+    }
+    if (c == YELLOW) {
+        return BGYELLOW;
     }
     return BGDEFAULT;
 } 
@@ -456,6 +460,7 @@ bool isArrayBalanced(TubeArray * self) {
     int orange = 0;
     int pink = 0;
     int grey = 0;
+    int yellow = 0;
     int lblue = 0;
 
     TubeNode * node = self->start;
@@ -475,6 +480,8 @@ bool isArrayBalanced(TubeArray * self) {
             lblue++;
         } else if (node->tube->pos1 == ORANGE) {
             orange++;
+        } else if (node->tube->pos1 == YELLOW) {
+            yellow++;
         }
 
         if (node->tube->pos2 == RED) {
@@ -491,6 +498,8 @@ bool isArrayBalanced(TubeArray * self) {
             lblue++;
         } else if (node->tube->pos2 == ORANGE) {
             orange++;
+        } else if (node->tube->pos2 == YELLOW) {
+            yellow++;
         }
 
         if (node->tube->pos3 == RED) {
@@ -507,6 +516,8 @@ bool isArrayBalanced(TubeArray * self) {
             lblue++;
         } else if (node->tube->pos3 == ORANGE) {
             orange++;
+        } else if (node->tube->pos3 == YELLOW) {
+            yellow++;
         }
 
         if (node->tube->pos4 == RED) {
@@ -523,6 +534,8 @@ bool isArrayBalanced(TubeArray * self) {
             lblue++;
         } else if (node->tube->pos4 == ORANGE) {
             orange++;
+        } else if (node->tube->pos4 == YELLOW) {
+            yellow++;
         }
 
         node = node->next;
@@ -533,6 +546,7 @@ bool isArrayBalanced(TubeArray * self) {
            (green % 4) == 0 && 
            (grey % 4) == 0 && 
            (lblue % 4) == 0 && 
+           (yellow % 4) == 0 && 
            (orange % 4) == 0;
 }
 
@@ -585,11 +599,14 @@ int main()
             printf("Color" FGGREY " grey"RESET"\n");
             tubeAddColor(t, GREY);
         } else if (strcmp(str, "lb") == 0 || strcmp(str, "ligth blue") == 0 ) {
-            printf("Color" FGGREEN " ligth blue"RESET"\n");
+            printf("Color" FGBLUE " ligth blue"RESET"\n");
             tubeAddColor(t, LBLUE);
         } else if (strcmp(str, "o") == 0 || strcmp(str, "orange") == 0 ) {
             printf("Color" FGORANGE " orange"RESET"\n");
             tubeAddColor(t, ORANGE);
+        } else if (strcmp(str, "y") == 0 || strcmp(str, "yellow") == 0 ) {
+            printf("Color" FGYELLOW " yellow"RESET"\n");
+            tubeAddColor(t, YELLOW);
         } else if (strcmp(str, "empty") == 0 ) {
             if(tubeIsEmpty(t)) {
                 tubeArrayAdd(a, t);
