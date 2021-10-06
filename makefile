@@ -10,4 +10,4 @@ clean:
 	rm main
 
 main: main.c
-	gcc main.c -o main
+	gcc main.c -o3 main
