@@ -453,6 +453,26 @@ bool listHasTubeArray(TubeListNode * nodeIn, TubeArray * t) {
     return false;
 }
 
+void updateColor(Color c, int *red, int *blue, int *green, int *orange, int *pink, int *grey, int *yellow, int *lblue) {
+    if (c == RED) {
+        *red += 1;
+    } else if (c == BLUE) {
+        *blue += 1;
+    } else if (c == GREEN) {
+        *green += 1;
+    } else if (c == PINK) {
+        *pink += 1;
+    } else if (c == GREY) {
+        *grey += 1;
+    } else if (c == LBLUE) {
+        *lblue += 1;
+    } else if (c == ORANGE) {
+        *orange += 1;
+    } else if (c == YELLOW) {
+        *yellow += 1;
+    }
+}
+
 bool isArrayBalanced(TubeArray * self) {
     int red = 0;
     int blue = 0;
@@ -466,78 +486,10 @@ bool isArrayBalanced(TubeArray * self) {
     TubeNode * node = self->start;
 
     while (node != NULL) {
-        if (node->tube->pos1 == RED) {
-            red++;
-        } else if (node->tube->pos1 == BLUE) {
-            blue++;
-        } else if (node->tube->pos1 == GREEN) {
-            green++;
-        } else if (node->tube->pos1 == PINK) {
-            pink++;
-        } else if (node->tube->pos1 == GREY) {
-            grey++;
-        } else if (node->tube->pos1 == LBLUE) {
-            lblue++;
-        } else if (node->tube->pos1 == ORANGE) {
-            orange++;
-        } else if (node->tube->pos1 == YELLOW) {
-            yellow++;
-        }
-
-        if (node->tube->pos2 == RED) {
-            red++;
-        } else if (node->tube->pos2 == BLUE) {
-            blue++;
-        } else if (node->tube->pos2 == GREEN) {
-            green++;
-        } else if (node->tube->pos2 == PINK) {
-            pink++;
-        } else if (node->tube->pos2 == GREY) {
-            grey++;
-        } else if (node->tube->pos2 == LBLUE) {
-            lblue++;
-        } else if (node->tube->pos2 == ORANGE) {
-            orange++;
-        } else if (node->tube->pos2 == YELLOW) {
-            yellow++;
-        }
-
-        if (node->tube->pos3 == RED) {
-            red++;
-        } else if (node->tube->pos3 == BLUE) {
-            blue++;
-        } else if (node->tube->pos3 == GREEN) {
-            green++;
-        } else if (node->tube->pos3 == PINK) {
-            pink++;
-        } else if (node->tube->pos3 == GREY) {
-            grey++;
-        } else if (node->tube->pos3 == LBLUE) {
-            lblue++;
-        } else if (node->tube->pos3 == ORANGE) {
-            orange++;
-        } else if (node->tube->pos3 == YELLOW) {
-            yellow++;
-        }
-
-        if (node->tube->pos4 == RED) {
-            red++;
-        } else if (node->tube->pos4 == BLUE) {
-            blue++;
-        } else if (node->tube->pos4 == GREEN) {
-            green++;
-        } else if (node->tube->pos4 == PINK) {
-            pink++;
-        } else if (node->tube->pos4 == GREY) {
-            grey++;
-        } else if (node->tube->pos4 == LBLUE) {
-            lblue++;
-        } else if (node->tube->pos4 == ORANGE) {
-            orange++;
-        } else if (node->tube->pos4 == YELLOW) {
-            yellow++;
-        }
-
+        updateColor(node->tube->pos1, &red, &blue,  &green,  &orange, &pink, &grey, &yellow, &lblue);
+        updateColor(node->tube->pos2, &red, &blue,  &green,  &orange, &pink, &grey, &yellow, &lblue);
+        updateColor(node->tube->pos3, &red, &blue,  &green,  &orange, &pink, &grey, &yellow, &lblue);
+        updateColor(node->tube->pos4, &red, &blue,  &green,  &orange, &pink, &grey, &yellow, &lblue);
         node = node->next;
     }
 
